@@ -31,6 +31,7 @@ type Actress = Person & {
               "South African" | "French" | "Indian" | "Israeli" | "Spanish" | 
               "South Korean" | "Chinese";
 };
+
 //Milestone 3
 //Crea una funzione getActress che, dato un id, effettua una chiamata a:
 //GET /actresses/:id
@@ -76,3 +77,64 @@ function isActress(obj: any): obj is Actress {
 const actress = await getActress(1);
   console.log(actress);
 
+//Milestone 4
+//Crea una funzione getAllActresses che chiama:
+//GET /actresses
+//La funzione deve restituire un array di oggetti Actress.
+//Può essere anche un array vuoto.
+async function getAllActresses(): Promise<Actress[]> {
+  try {
+    const response = await fetch("http://localhost:5000/actresses");
+
+    if (!response.ok) {
+      console.error(`Errore HTTP: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+
+    return Array.isArray(data) ? data.filter(isActress) : [];
+  } catch (error) {
+    console.error("Errore nella richiesta API:", error);
+    return [];
+  }
+}
+
+
+  const allActresses = await getAllActresses();
+  console.log(allActresses);
+
+// Milestone 5
+//Crea una funzione getActresses che riceve un array di numeri (gli id delle attrici).
+//Per ogni id nell’array, usa la funzione getActress che hai creato nella Milestone 3 per recuperare l’attrice corrispondente.
+//L'obiettivo è ottenere una lista di risultati in parallelo, quindi dovrai usare Promise.all.
+//La funzione deve restituire un array contenente elementi di tipo Actress oppure null (se l’attrice non è stata trovata).
+async function getActresses(ids: number[]): Promise<(Actress | null)[]> {
+  return Promise.all(ids.map(getActress));
+}
+
+  const multipleActresses = await getActresses([1, 2, 3]);
+  console.log(multipleActresses);
+  
+//BONUS 1
+//Crea le funzioni:
+//createActress
+//updateActress
+//Utilizza gli Utility Types:
+//Omit: per creare un'attrice senza passare id, che verrà generato casualmente.
+//Partial: per permettere l’aggiornamento di qualsiasi proprietà tranne id e name.
+// Tipo per la creazione di una nuova attrice, escludendo l'ID che sarà generato
+
+
+//BONUS 2
+//Crea un tipo Actor, che estende Person con le seguenti differenze rispetto ad Actress:
+//known_for: una tuple di 3 stringhe
+//awards: array di una o due stringhe
+//nationality: le stesse di Actress più:
+//Scottish, New Zealand, Hong Kong, German, Canadian, Irish.
+//Implementa anche le versioni getActor, getAllActors, getActors, createActor, updateActor.
+
+
+//BONUS 3
+//Crea la funzione createRandomCouple che usa getAllActresses e getAllActors per restituire un’array che ha sempre due elementi:
+//al primo posto una Actress casuale e al secondo posto un Actor casuale.
