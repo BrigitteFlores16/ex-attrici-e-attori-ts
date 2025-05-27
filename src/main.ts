@@ -115,7 +115,7 @@ async function getActresses(ids: number[]): Promise<(Actress | null)[]> {
 
   const multipleActresses = await getActresses([1, 2, 3]);
   console.log(multipleActresses);
-  
+
 //BONUS 1
 //Crea le funzioni:
 //createActress
@@ -124,6 +124,47 @@ async function getActresses(ids: number[]): Promise<(Actress | null)[]> {
 //Omit: per creare un'attrice senza passare id, che verrà generato casualmente.
 //Partial: per permettere l’aggiornamento di qualsiasi proprietà tranne id e name.
 // Tipo per la creazione di una nuova attrice, escludendo l'ID che sarà generato
+type NewActress = Omit<Actress, "id">;
+type UpdateActress = Partial<Omit<Actress, "id" | "name">>;
+async function createActress(actress: NewActress): Promise<Actress> {
+  try {
+    const response = await fetch("http://localhost:5000/actresses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...actress, id: Math.floor(Math.random() * 10000) }) 
+    });
+
+    if (!response.ok) {
+      throw new Error(`Errore HTTP: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Errore nella creazione dell'attrice:", error);
+    throw error;
+  }
+}
+
+
+async function updateActress(id: number, updates: UpdateActress): Promise<Actress | null> {
+  try {
+    const response = await fetch(`http://localhost:5000/actresses/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates)
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Errore nell'aggiornamento dell'attrice:", error);
+    return null;
+  }
+}
+
 
 
 //BONUS 2
@@ -134,7 +175,155 @@ async function getActresses(ids: number[]): Promise<(Actress | null)[]> {
 //Scottish, New Zealand, Hong Kong, German, Canadian, Irish.
 //Implementa anche le versioni getActor, getAllActors, getActors, createActor, updateActor.
 
+type Actor = Person & {
+  known_for: [string, string, string];
+  awards: [string] | [string, string];
+  nationality: "American" | "British" | "Australian" | "Israeli-American" | 
+              "South African" | "French" | "Indian" | "Israeli" | "Spanish" | 
+              "South Korean" | "Chinese" | "Scottish" | "New Zealand" | "Hong Kong" |
+              "German" | "Canadian" | "Irish";
+};
+
+
+function isActor(obj: any): obj is Actor {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    typeof obj.id === "number" &&
+    typeof obj.name === "string" &&
+    typeof obj.birth_year === "number" &&
+    (typeof obj.death_year === "number" || obj.death_year === undefined) &&
+    typeof obj.biography === "string" &&
+    typeof obj.image === "string" &&
+    Array.isArray(obj.known_for) &&
+    obj.known_for.length === 3 &&
+    obj.known_for.every((movie: string) => typeof movie === "string") &&
+    Array.isArray(obj.awards) &&
+    (obj.awards.length === 1 || obj.awards.length === 2) &&
+    obj.awards.every((award: string) => typeof award === "string") &&
+    ["American", "British", "Australian", "Israeli-American", "South African",
+     "French", "Indian", "Israeli", "Spanish", "South Korean", "Chinese",
+     "Scottish", "New Zealand", "Hong Kong", "German", "Canadian", "Irish"]
+      .includes(obj.nationality)
+  );
+}
+
+async function getActor(id: number): Promise<Actor | null> {
+  try {
+    const response = await fetch(`http://localhost:5000/actors/${id}`);
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    return isActor(data) ? data : null;
+  } catch (error) {
+    console.error("Errore nel recupero dell'attore:", error);
+    return null;
+  }
+}
+
+
+async function getAllActors(): Promise<Actor[]> {
+  try {
+    const response = await fetch("http://localhost:5000/actors");
+    if (!response.ok) {
+      return [];
+    }
+    const data = await response.json();
+    return Array.isArray(data) ? data.filter(isActor) : [];
+  } catch (error) {
+    console.error("Errore nel recupero degli attori:", error);
+    return [];
+  }
+}
+
+
+async function getActors(ids: number[]): Promise<(Actor | null)[]> {
+  return Promise.all(ids.map(getActor));
+}
+
+type NewActor = Omit<Actor, "id">;
+
+
+type UpdateActor = Partial<Omit<Actor, "id" | "name">>;
+
+
+async function createActor(actor: NewActor): Promise<Actor> {
+  try {
+    const response = await fetch("http://localhost:5000/actors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...actor, id: Math.floor(Math.random() * 10000) }) 
+    });
+
+    if (!response.ok) {
+      throw new Error(`Errore HTTP: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Errore nella creazione dell'attore:", error);
+    throw error;
+  }
+}
+
+
+async function updateActor(id: number, updates: UpdateActor): Promise<Actor | null> {
+  try {
+    const response = await fetch(`http://localhost:5000/actors/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates)
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Errore nell'aggiornamento dell'attore:", error);
+    return null;
+  }
+}
+
+ 
+  const actor = await getActor(1);
+  console.log(actor);
+
+
+  const allActors = await getAllActors();
+  console.log(allActors);
+
+  
+  const multipleActors = await getActors([1, 2]);
+  console.log(multipleActors);
+
+
 
 //BONUS 3
 //Crea la funzione createRandomCouple che usa getAllActresses e getAllActors per restituire un’array che ha sempre due elementi:
 //al primo posto una Actress casuale e al secondo posto un Actor casuale.
+
+async function createRandomCouple(): Promise<[Actress, Actor] | null> {
+  try {
+    const actresses = await getAllActresses();
+    const actors = await getAllActors();
+
+    if (actresses.length === 0 || actors.length === 0) {
+      console.error("Errore: impossibile creare una coppia, elenco vuoto.");
+      return null;
+    }
+
+    const randomActress = actresses[Math.floor(Math.random() * actresses.length)];
+    const randomActor = actors[Math.floor(Math.random() * actors.length)];
+
+    return [randomActress, randomActor];
+  } catch (error) {
+    console.error("Errore nella creazione della coppia:", error);
+    return null;
+  }
+}
+
+const randomCouple = await createRandomCouple();
+  console.log(randomCouple);
